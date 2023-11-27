@@ -3,4 +3,4 @@ Flask-WTF
 plotly
 pandas
 SQLAlchemy
-guinicorn
+gunicorn
