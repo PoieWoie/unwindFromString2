@@ -1,3 +1,4 @@
+# Import necessary modules
 from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
@@ -10,17 +11,14 @@ import pandas as pd
 import plotly.express as px
 import requests
 
-import os
-
-
+# Create the Flask app
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI', 'default_value')
-
-
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
-0
+
+# Define the ASINData model
 class ASINData(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     asin = db.Column(db.String(10), nullable=False)
@@ -30,7 +28,6 @@ class ASINData(db.Model):
     category2_rank = db.Column(db.Integer, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
-# Testing the database connection
 # Testing the database connection
 try:
     with app.app_context():
@@ -45,8 +42,6 @@ with app.app_context():
 
 # Route to input ASIN and category data to the API
 @app.route('/', methods=['GET'])
-# Route to input ASIN and category data to the API
-@app.route('/', methods=['GET'])
 def input_data():
     asin = request.args.get('asin', '')
     category1_name = request.args.get('category1_name', '')
@@ -55,7 +50,6 @@ def input_data():
     category2_rank = int(request.args.get('category2_rank', 0) or 0)
 
     if not any([asin, category1_name, category2_name]):
-        # Return a response with a 200 status code indicating no input data
         return jsonify({"message": "No input data provided."})
 
     # Store the data in the database
@@ -133,5 +127,6 @@ def generate_charts(asin):
     except Exception as e:
         return jsonify({"error": str(e)})
 
-if __name__ == '__main__':
-    app.run(debug=True)
+# Entry point for Gunicorn
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=False)
