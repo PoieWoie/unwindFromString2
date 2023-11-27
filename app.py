@@ -5,18 +5,22 @@ from wtforms import StringField, SelectField, IntegerField, SubmitField
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify
 from sqlalchemy import text
-
+import os
 import pandas as pd
 import plotly.express as px
 import requests
 
+import os
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://chart_user:djYtTn4PHQH4x9Y@mysql.amzlistingtracker.com/chart'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI', 'default_value')
+
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
-
+0
 class ASINData(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     asin = db.Column(db.String(10), nullable=False)
