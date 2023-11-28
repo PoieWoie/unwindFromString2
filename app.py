@@ -43,21 +43,15 @@ except Exception as e:
 with app.app_context():
     db.create_all()
 
-# Function to validate API key
-def validate_api_key():
-    api_key = request.headers.get('Api-Key')
-    if api_key != app.config['API_KEY']:
-        return jsonify({"error": "Invalid API key"}), 401
-    return None  # Proceed with the request
-
-# Add before_request decorator to validate API key before each request
-@app.before_request
-def before_request():
-    return validate_api_key()
-
-# Route to input ASIN and category data to the API
+# Route to input ASIN and category data to the API (secured with API key)
 @app.route('/', methods=['GET'])
 def input_data():
+    api_key = request.headers.get('Api-Key')
+
+    # Validate API key
+    if api_key != app.config['API_KEY']:
+        return jsonify({"error": "Invalid API key"}), 401
+
     asin = request.args.get('asin', '')
     category1_name = request.args.get('category1_name', '')
     category1_rank = int(request.args.get('category1_rank', 0) or 0)
@@ -103,9 +97,15 @@ def generate_category_chart(asin, df, category, title_suffix):
 
     return fig.to_html(full_html=False)
 
-# Route to generate charts for a specific ASIN
+# Route to generate charts for a specific ASIN (secured with API key)
 @app.route('/api/charts/<asin>', methods=['GET'])
 def generate_charts(asin):
+    api_key = request.headers.get('Api-Key')
+
+    # Validate API key
+    if api_key != app.config['API_KEY']:
+        return jsonify({"error": "Invalid API key"}), 401
+
     try:
         # Query data from the database for the specified ASIN
         with app.app_context():
@@ -127,13 +127,13 @@ def generate_charts(asin):
             # Generate chart for the available category
             available_category = unique_categories[unique_categories].index[0]
             chart = generate_category_chart(asin, df, available_category, 'Rank over Time')
-            return jsonify({"chart1": chart})
+            return render_template('charts.html', chart1=chart)
 
         elif num_categories_with_data == 2:
             # Generate charts for both categories
             chart1 = generate_category_chart(asin, df, 'category1', 'Rank over Time')
             chart2 = generate_category_chart(asin, df, 'category2', 'Rank over Time')
-            return jsonify({"chart1": chart1, "chart2": chart2})
+            return render_template('charts.html', chart1=chart1, chart2=chart2)
 
         else:
             # No category data available
@@ -142,6 +142,5 @@ def generate_charts(asin):
     except Exception as e:
         return jsonify({"error": str(e)})
 
-# Entry point for Gunicorn
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=False)
