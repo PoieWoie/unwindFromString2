@@ -100,12 +100,7 @@ def generate_category_chart(asin, df, category, title_suffix):
 # Route to generate charts for a specific ASIN (secured with API key)
 @app.route('/api/charts/<asin>', methods=['GET'])
 def generate_charts(asin):
-    api_key = request.headers.get('Api-Key')
-
-    # Validate API key
-    if api_key != app.config['API_KEY']:
-        return jsonify({"error": "Invalid API key"}), 401
-
+    # No need to check for API key in this route
     try:
         # Query data from the database for the specified ASIN
         with app.app_context():
