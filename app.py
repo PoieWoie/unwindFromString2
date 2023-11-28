@@ -16,6 +16,9 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI', 'default_value')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['API_KEY'] = os.getenv('API_KEY', 'your_api_key')  # Set your API key in env var
+
+
 db = SQLAlchemy(app)
 
 # Define the ASINData model
@@ -39,6 +42,18 @@ except Exception as e:
 # Creating the tables within the application context
 with app.app_context():
     db.create_all()
+
+# Function to validate API key
+def validate_api_key():
+    api_key = request.headers.get('Api-Key')
+    if api_key != app.config['API_KEY']:
+        return jsonify({"error": "Invalid API key"}), 401
+    return None  # Proceed with the request
+
+# Add before_request decorator to validate API key before each request
+@app.before_request
+def before_request():
+    return validate_api_key()
 
 # Route to input ASIN and category data to the API
 @app.route('/', methods=['GET'])
@@ -112,13 +127,13 @@ def generate_charts(asin):
             # Generate chart for the available category
             available_category = unique_categories[unique_categories].index[0]
             chart = generate_category_chart(asin, df, available_category, 'Rank over Time')
-            return render_template('charts.html', chart1=chart)
+            return jsonify({"chart1": chart})
 
         elif num_categories_with_data == 2:
             # Generate charts for both categories
             chart1 = generate_category_chart(asin, df, 'category1', 'Rank over Time')
             chart2 = generate_category_chart(asin, df, 'category2', 'Rank over Time')
-            return render_template('charts.html', chart1=chart1, chart2=chart2)
+            return jsonify({"chart1": chart1, "chart2": chart2})
 
         else:
             # No category data available
